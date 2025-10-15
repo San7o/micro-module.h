@@ -1,0 +1,100 @@
+micro-module.h
+==============
+
+A lightweight header-only library for defining, loading, and
+unloading runtime modules / plugins with a simple C99 API.
+
+Author:  Giovanni Santini
+Mail:    giovanni.santini@proton.me
+Github:  @San7o
+
+
+Quickstart
+----------
+
+A module is just a normal C shared library where at least three
+ symbols are exported: the module name, an init function, and
+an exit function. The actual symbols are specified by the loader
+and their types are specified by the library.
+
+For this example let's use `micro_module_name`,`micro_module_init`
+and `micro_module_exit`:
+
+  // The name of this module, used as an identifier
+  const char micro_module_name[] = "example_module1";
+
+  // Function called when module gets loaded
+  extern int micro_module_init(void* arg)
+  {
+    // ....
+    return 0;
+  }
+
+  // Function called when module gets unloaded
+  extern int micro_module_exit(void* arg)
+  {
+    // ....
+    return 0;
+  }
+
+Compile the module with -fPIC and -shared.
+
+In your loader, you can load and unload a module with
+`micro_module_init` and `micro_module_exit`. Alternatively, you can
+use the `_all` variants of these functions to load all the modules
+from a directory, or unload all loaded modules.
+
+Do this:
+
+  #define MICRO_MODULE_IMPLEMENTATION
+
+before you include this file in *one* C or C++ file to create the
+implementation.
+
+i.e. it should look like this:
+
+  #include ...
+  #include ...
+  #include ...
+  #define MICRO_MODULE_IMPLEMENTATION
+  #include "micro-module.h"
+
+Here is an example loader:
+
+  #define MICRO_MODULE_IMPLEMENTATION
+  #include "micro-module.h"
+
+  int main(void)
+  {
+    MicroModule mm =
+      micro_module_setup("micro_module_name",  // symbol for name
+                         "micro_module_init",  // symbol for the init func
+                         "micro_module_exit",  // symbol for the exit func
+                         true);  // create a new symbol namespace
+
+    // Load all modules from the modules directory
+    micro_module_init_all(&mm, "./example_modules/compiled", NULL);
+
+    // Unload a specific module
+    micro_module_exit(&mm, "example_module1", NULL);
+
+    // Unload all modules
+    micro_module_exit_all(&mm, NULL);
+    return 0;
+  }
+
+You can tune the library by #defining certain values. See the
+"Config" comments under "Configuration" below.
+
+
+Code
+----
+
+The official git repository of micro-module.h is hosted at:
+
+    https://github.com/San7o/micro-module.h
+
+This is part of a bigger collection of header-only C99 libraries
+called "micro-headers", contributions are welcome:
+
+    https://github.com/San7o/micro-headers
